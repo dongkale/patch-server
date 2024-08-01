@@ -19,7 +19,9 @@ export class DownloadFileController {
   @Post('/info')
   @UseGuards(AuthGuard('api-key'))
   async downloadInfo(@Body() dto: DownloadFileInfoDto) {
-    this.logger.log(dto);
+    this.logger.log(`${JSON.stringify(dto)}`);
+    this.logger.log(`${dto.key1}`);
+    this.logger.log(`${dto.key2}`);
 
     // url 리스트 배열로 보낸다
     const urlList = [];

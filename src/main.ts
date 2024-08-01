@@ -9,6 +9,7 @@ import {
 import 'winston-daily-rotate-file';
 import { ValidationPipe } from '@nestjs/common';
 import { CustomExceptionFilter } from './common/filters/custom-exception.filter';
+//import { findKeyValueByValue } from './common/utils/objects';
 
 async function bootstrap() {
   initializeTransactionalContext({ storageDriver: StorageDriver.AUTO });
@@ -20,6 +21,26 @@ async function bootstrap() {
   const appName = configService.get<string>('APP_NAME', 'EMPTY');
   const nodeEnv = configService.get<string>('NODE_ENV', 'EMPTY');
   const isProduction = configService.get('NODE_ENV') === 'production';
+
+  // const apiKeys = configService.get<string>('API_KEYS');
+  // const parseApiKeys = JSON.parse(apiKeys);
+
+  // for (const key in parseApiKeys) {
+  //   console.log(`${key}: ${parseApiKeys[key]}`);
+  // }
+
+  // const s = '1ab2c3d4e5f61ab2c3d4e5f66';
+  // const __v = findKeyValueByValue(parseApiKeys, s);
+  // console.log(__v.key, __v.value);
+
+  // value 검색
+  // const s = '1ab2c3d4e5f61ab2c3d4e5f6';
+  // const f = parseApiKeys.find((key) => {
+  //   console.log(key);
+
+  //   return s == parseApiKeys[key];
+  //   // console.log(parseApiKeys[key]);
+  // });
 
   // Cross-Origin Resource Sharing
   app.enableCors({
