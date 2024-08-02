@@ -18,8 +18,11 @@ export class RequestLoggerInterceptor implements NestInterceptor {
     const query = request.query;
     const body = request.body;
 
+    const apiKey = request.header('x-api-key');
+
     const logMessage = {
       message: `${method} ${url} REQUEST`,
+      apiKey: apiKey,
       query,
       body,
     };

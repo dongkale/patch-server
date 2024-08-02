@@ -1,5 +1,10 @@
 import { DownloadFileModule } from '@/module/download-file/download-file.module';
-import { Module, Logger, MiddlewareConsumer } from '@nestjs/common';
+import {
+  Module,
+  NestModule,
+  RequestMethod,
+  MiddlewareConsumer,
+} from '@nestjs/common';
 import { LoggerMiddleware } from '@/common/logger/logger.middleware';
 import { AppController } from '@/app.controller';
 import { AppService } from '@//app.service';
@@ -12,6 +17,7 @@ import { HealthModule } from '@/health/health.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
+import { AuthGuardMiddleware } from '@/common/auth/auth-guard.middleware';
 
 dotenv.config();
 
@@ -47,6 +53,23 @@ dotenv.config();
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AuthGuardMiddleware).forRoutes('*');
     consumer.apply(LoggerMiddleware).forRoutes('*');
   }
 }
+// export class AppModule {
+//   configure(consumer: MiddlewareConsumer) {
+//     consumer
+//       .apply((req, res, next) => {
+//         const context = { switchToHttp: () => ({ getRequest: () => req }) };
+//         // const guard = new ApiKeyGuard();
+
+//         // if (guard.canActivate(context as any)) {
+//         next();
+//         // } else {
+//         //   res.status(401).send('Unauthorized');
+//         // }
+//       })
+//       .forRoutes({ path: '/downloads/*', method: RequestMethod.GET });
+//   }
+// }

@@ -17,7 +17,7 @@ export class DownloadFileController {
   ) {}
 
   @Post('/info')
-  @UseGuards(AuthGuard('api-key'))
+  // @UseGuards(AuthGuard('api-key'))
   async downloadInfo(@Body() dto: DownloadFileInfoDto) {
     this.logger.log(`${JSON.stringify(dto)}`);
     this.logger.log(`${dto.key1}`);
@@ -27,17 +27,36 @@ export class DownloadFileController {
     const urlList = [];
 
     urlList.push({
-      filePath: 'image-15/image_15.bin',
-      checksum: 'a34ee55dbb3aa4ac993eb7454b1f4d15',
+      filePath: 'patch/text01.txt',
+      checksum: 'cb08ca4a7bb5f9683c19133a84872ca7',
+      updateStatus: true,
     });
     urlList.push({
-      filePath: 'image-12/image_12.bin',
-      checksum: 'a34ee55dbb3aa4ac993eb7454b1f4d15',
+      filePath: 'patch/text02.txt',
+      checksum: 'f38c26a09c89158123f77b474221cc8a',
+      updateStatus: true,
     });
     urlList.push({
-      filePath: 'image-11/image_11.bin',
-      checksum: 'a34ee55dbb3aa4ac993eb7454b1f4d15',
+      filePath: 'patch/text03.txt',
+      checksum: 'cdd50a3cc4c11350b4f7a97b9c83b569',
+      updateStatus: true,
     });
+
+    // urlList.push({
+    //   filePath: 'image-15/image_15.bin',
+    //   checksum: 'a34ee55dbb3aa4ac993eb7454b1f4d15',
+    //   updateStatus: true,
+    // });
+    // urlList.push({
+    //   filePath: 'image-12/image_12.bin',
+    //   checksum: 'a34ee55dbb3aa4ac993eb7454b1f4d15',
+    //   updateStatus: true,
+    // });
+    // urlList.push({
+    //   filePath: 'image-11/image_11.bin',
+    //   checksum: 'a34ee55dbb3aa4ac993eb7454b1f4d15',
+    //   updateStatus: true,
+    // });
     // urlList.push({
     //   filePath: 'image-10/image_10.bin',
     //   checksum: 'cb3fffcc0e7c5b2874c639a4107b3a6a',
