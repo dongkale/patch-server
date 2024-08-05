@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { winstonLogger } from './common/logger/winston.util';
 import { ConfigService } from '@nestjs/config';
@@ -7,7 +7,7 @@ import {
   StorageDriver,
 } from 'typeorm-transactional';
 import 'winston-daily-rotate-file';
-import { ValidationPipe } from '@nestjs/common';
+import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { CustomExceptionFilter } from './common/filters/custom-exception.filter';
 //import { findKeyValueByValue } from './common/utils/objects';
 
@@ -49,6 +49,8 @@ async function bootstrap() {
     optionsSuccessStatus: 200,
   });
 
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
   app.useGlobalPipes(
     new ValidationPipe({
       /**
@@ -62,7 +64,13 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      validationError: { value: true, target: true },
       disableErrorMessages: isProduction,
+      // exceptionFactory: (validationErrors: ValidationError[] = []) => {
+      //   return new BadRequestException(
+      //     validationErrors.map((e) => new CustomValidationError(e)),
+      //   );
+      // },
     }),
   );
 

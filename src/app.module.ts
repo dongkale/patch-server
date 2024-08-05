@@ -1,10 +1,4 @@
-import { DownloadFileModule } from '@/module/download-file/download-file.module';
-import {
-  Module,
-  NestModule,
-  RequestMethod,
-  MiddlewareConsumer,
-} from '@nestjs/common';
+import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { LoggerMiddleware } from '@/common/logger/logger.middleware';
 import { AppController } from '@/app.controller';
 import { AppService } from '@//app.service';
@@ -18,12 +12,12 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import * as dotenv from 'dotenv';
 import { AuthGuardMiddleware } from '@/common/auth/auth-guard.middleware';
+import { PatchModule } from '@/patch/patch.module';
 
 dotenv.config();
 
 @Module({
   imports: [
-    DownloadFileModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env`,
@@ -35,7 +29,7 @@ dotenv.config();
     AuthModule,
     DatabaseModule,
     HealthModule,
-    DownloadFileModule,
+    PatchModule,
   ],
   controllers: [AppController],
   providers: [

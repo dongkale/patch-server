@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class DownloadFileInfoDto {
+export class PatchInfoDto {
   @IsNotEmpty()
   @IsString()
   key1: string;
