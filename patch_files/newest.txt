@@ -1,2 +1,5 @@
-http://localhost:3030/image-15/image_15.bin,a34ee55dbb3aa4ac993eb7454b1f4d15
-http://localhost:3030/image-12/image_12.bin,a34ee55dbb3aa4ac993eb7454b1f4d15
+0.1,text01.txt,0,cb08ca4a7bb5f9683c19133a84872ca7,0
+0.1,text02.txt,48,f38c26a09c89158123f77b474221cc8a,0
+0.1,text03.txt,334564,cdd50a3cc4c11350b4f7a97b9c83b569,0
+0.1,image_11.bin,675888392,a34ee55dbb3aa4ac993eb7454b1f4d15,0
+0.1,image_09.bin,80876324,30eb7e71f05abc3a12ce3fcd589debd6,0

@@ -1,8 +1,15 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Patch } from '@/patch/patch.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { createReadStream, statSync } from 'fs';
+import { Response } from 'express';
 import { join } from 'path';
 import * as fs from 'fs';
 
@@ -109,5 +116,93 @@ export class PatchService {
       filePath: filePath,
       fileName: fileName,
     };
+  }
+
+  async getFileStream__(response: Response, fileName: string) {
+    const patchFilePath = this.configService.get('PATCH_FILE_PATH');
+    const patchFileSubPath = this.configService.get(
+      'PATCH_FILE_DOWNLOAD_SUB_PATH',
+    );
+
+    const filePath = join(
+      process.cwd(),
+      patchFilePath,
+      `/${patchFileSubPath}/${fileName}`,
+    );
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('파일을 찾을 수 없습니다.');
+    }
+
+    const fileSize = fs.statSync(filePath).size;
+
+    const range = response.req.headers.range;
+    if (range) {
+      // const fileSize = statSync(filePath).size;
+
+      const parts = range
+        ? range.replace(/bytes=/, '').split('-')
+        : [0, fileSize - 1];
+      const start = parseInt(parts[0] as string, 10);
+      const end = parts[1] ? parseInt(parts[1] as string, 10) : fileSize - 1;
+
+      if (start >= fileSize || end >= fileSize) {
+        response.setHeader('Content-Range', `bytes */${fileSize}`);
+        response.sendStatus(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
+        return {
+          fileStream: null,
+          fileSize: fileSize,
+          filePath: filePath,
+          fileName: fileName,
+        };
+      }
+
+      const chunkSize = end - start + 1;
+      const fileStream = createReadStream(filePath, { start, end });
+
+      response.status(HttpStatus.PARTIAL_CONTENT);
+      response.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
+      response.setHeader('Accept-Ranges', 'bytes');
+      response.setHeader('Content-Length', chunkSize.toString());
+      response.setHeader('Content-Type', 'application/octet-stream');
+      response.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${fileName}"`,
+      );
+
+      this.logger.log(
+        `file: ${JSON.stringify({ fileName: fileName, filePath: filePath, fileSize: fileSize }, null, 2)}`,
+      );
+
+      // return new StreamableFile(fileStream);
+      return {
+        fileStream: fileStream,
+        fileSize: fileSize,
+        filePath: filePath,
+        fileName: fileName,
+      };
+    } else {
+      // const fileSize: fs.statSync(filePath).size;
+
+      // response.setHeader('Content-Type', 'application/octet-stream');
+      response.setHeader('Content-Type', 'application/json');
+      response.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${fileName}"`,
+      );
+      response.setHeader('Content-Length', fileSize.toString());
+      response.setHeader('Cache-Control', 'public, max-age=31536000');
+
+      this.logger.log(
+        `file: ${JSON.stringify({ fileName: fileName, filePath: filePath, fileSize: fileSize }, null, 2)}`,
+      );
+
+      // return new StreamableFile(file.fileStream);
+      return {
+        fileStream: fs.createReadStream(filePath),
+        fileSize: fileSize,
+        filePath: filePath,
+        fileName: fileName,
+      };
+    }
   }
 }

@@ -128,9 +128,9 @@ export class PatchController {
     const arrayPatchs = patchs.map((item) => {
       return {
         version: item.version,
-        fileName: `${item.fileName}`,
+        fileName: item.fileName,
+        fileSize: item.fileSize,
         checksum: item.checksum,
-        fileSize: `${item.fileSize}`,
         forceUpdate: item.forceUpdate,
       };
     });
@@ -145,6 +145,9 @@ export class PatchController {
   }
 
   // https://medium.com/@me9lika.sh/uploading-and-downloading-large-files-with-nodejs-db9e1bf4a8cc
+  // https://medium.com/@vishal1909/how-to-handle-partial-content-in-node-js-8b0a5aea216
+  // https://github.com/phoenixinfotech1984/node-content-range/blob/master/server.js
+  // https://github.com/melikaShojaee/express-large-file-upload-download
   @Get('/download/:filename')
   // @UseGuards(AuthGuard('api-key'))
   async downloadFile(
@@ -203,49 +206,78 @@ export class PatchController {
 
     // this.logger.log(`downloadPath: ${JSON.stringify(file.fileName, null, 2)}`);
 
+    // -------- 기본 다운로드 되는 버젼
+
     const range = response.req.headers.range;
-    const file = await this.patchService.getFileStream(filename);
+    if (range) {
+      const file = await this.patchService.getFileStream(filename);
 
-    const filePath = file.filePath;
-    const fileSize = statSync(filePath).size;
-    const parts = range
-      ? range.replace(/bytes=/, '').split('-')
-      : [0, fileSize - 1];
-    const start = parseInt(parts[0] as string, 10);
-    const end = parts[1] ? parseInt(parts[1] as string, 10) : fileSize - 1;
+      const filePath = file.filePath;
+      const fileSize = statSync(filePath).size;
+      const parts = range
+        ? range.replace(/bytes=/, '').split('-')
+        : [0, fileSize - 1];
+      const start = parseInt(parts[0] as string, 10);
+      const end = parts[1] ? parseInt(parts[1] as string, 10) : fileSize - 1;
 
-    if (start >= fileSize || end >= fileSize) {
-      response.setHeader('Content-Range', `bytes */${fileSize}`);
-      response.sendStatus(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
-      return;
+      if (start >= fileSize || end >= fileSize) {
+        response.setHeader('Content-Range', `bytes */${fileSize}`);
+        response.sendStatus(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
+        return;
+      }
+
+      const chunkSize = end - start + 1;
+      const fileStream = createReadStream(filePath, { start, end });
+
+      response.status(HttpStatus.PARTIAL_CONTENT);
+      response.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
+      response.setHeader('Accept-Ranges', 'bytes');
+      response.setHeader('Content-Length', chunkSize.toString());
+      response.setHeader('Content-Type', 'application/octet-stream');
+      response.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${file.fileName}"`,
+      );
+
+      this.logger.log(
+        `downloadPath: ${JSON.stringify(file.fileName, null, 2)}`,
+      );
+
+      // fileStream.pipe(response);
+      return new StreamableFile(fileStream);
+    } else {
+      const file = await this.patchService.getFileStream(filename);
+
+      // response.setHeader('Content-Type', 'application/octet-stream');
+      response.setHeader('Content-Type', 'application/json');
+      response.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${file.fileName}"`,
+      );
+      response.setHeader('Content-Length', file.fileSize.toString());
+      response.setHeader('Cache-Control', 'public, max-age=31536000');
+
+      this.logger.log(
+        `downloadPath: ${JSON.stringify(file.fileName, null, 2)}`,
+      );
+
+      // file.fileStream.pipe(response);
+      return new StreamableFile(file.fileStream);
     }
-
-    const chunkSize = end - start + 1;
-    const fileStream = createReadStream(filePath, { start, end });
-
-    response.status(HttpStatus.PARTIAL_CONTENT);
-    response.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
-    response.setHeader('Accept-Ranges', 'bytes');
-    response.setHeader('Content-Length', chunkSize.toString());
-    response.setHeader('Content-Type', 'application/octet-stream');
-    response.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${file.fileName}"`,
-    );
-
-    this.logger.log(`downloadPath: ${JSON.stringify(file.fileName, null, 2)}`);
-
-    fileStream.pipe(response);
   }
 
-  // @Get(':filename')
+  @Get('/download__/:filename')
   // @UseGuards(AuthGuard('api-key'))
-  // downloadFile(@Param('filename') filename: string, @Res() res: Response) {
-  //   const filePath = join(__dirname, '../../public', filename);
-  //   const fileStream = createReadStream(filePath);
+  async downloadFile__(
+    @Param('filename') filename: string,
+    @Res({ passthrough: true }) response: Response, // Response -> import { Response } from 'express';
+  ) {
+    const file = await this.patchService.getFileStream__(response, filename);
 
-  //   fileStream.pipe(res);
-  // }
+    // response.end();
+
+    return new StreamableFile(file.fileStream);
+  }
 
   // @Get(':filename')
   // @UseGuards(AuthGuard('api-key'))

@@ -33,16 +33,16 @@ export class AuthGuardMiddleware implements NestMiddleware {
     const request: Request = context.switchToHttp().getRequest();
     const apiKey = request.header('x-api-key');
 
-    // if (this.isCheckApiKey(apiKey)) {
-    //   next();
-    // } else {
-    //   this.logger.error(
-    //     `Invalid Api Key: ${apiKey}, ip: ${ip}, method: ${method}, originalUrl: ${originalUrl}`,
-    //   );
-    //   res.status(401).send('Unauthorized');
-    // }
+    if (this.isCheckApiKey(apiKey)) {
+      next();
+    } else {
+      this.logger.error(
+        `Invalid Api Key: ${apiKey}, ip: ${ip}, method: ${method}, originalUrl: ${originalUrl}`,
+      );
+      res.status(401).send('Unauthorized');
+    }
 
-    next();
+    // next();
 
     // const guard = new ApiKeyGuard(this.configService);
 
